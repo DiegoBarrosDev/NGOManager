@@ -1,0 +1,201 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+struct Doador {
+    char nome[50];
+    int doacao;
+    char data[11];
+    int cpf;
+};
+
+int menuProjetos();
+int menuFinanceiro();
+int menuDoadores();
+void cadastrarDoador(struct Doador doador);
+void consultarDoador(FILE *arquivo);
+void excluirDoador(FILE *arquivo, int cpf_excluir);
+
+int main() {
+    int ativo = 1;
+
+    while (ativo == 1) {
+        int opcao = menuProjetos();
+
+        switch (opcao) {
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            case 4:
+                break;
+            case 5:
+                ativo = menuFinanceiro();
+                break;
+            case 6:
+                ativo = menuDoadores();
+            case 8:
+                ativo = 0;
+                break;
+            default:
+                printf("Opção inválida. Tente novamente.\n");
+                break;
+        }
+    }
+
+    printf("Sistema encerrado.\n");
+
+    return 0;
+}
+int menuProjetos() {
+    int opcao = 0;
+    printf("\nNGO Manager\n\n");
+    printf("Meus Projetos\n\n");
+
+    printf("1 - Consultar projeto\n");
+    printf("2 - Cadastrar projeto\n");
+    printf("3 - Alterar projeto\n");
+    printf("4 - Excluir projeto\n");
+    printf("5 - Ir para o menu Financeiro\n");
+    printf("6 - Ir para o menu Doadores\n");
+    printf("8 - Sair\n");
+
+    scanf("%d", &opcao);
+
+    return opcao;
+}
+int menuDoadores() {
+    int opcao = 0;
+    FILE *arquivo;
+    
+    printf("\nNGO Manager\n\n");
+    printf("Doadores\n\n");
+    printf("1 - Consultar doadores\n");
+    printf("2 - Cadastrar doador\n");
+    printf("3 - Excluir doador\n");
+    printf("4 - Voltar ao menu inicial\n");
+    printf("5 - Sair\n");
+
+    scanf("%d", &opcao);
+    if (opcao == 1) {
+        arquivo = fopen("doadores.txt", "r");
+        if (arquivo == NULL) {
+            printf("Erro ao abrir o arquivo.\n");
+            return 0;
+        }
+        consultarDoador(arquivo);
+        fclose(arquivo);
+    } else if (opcao == 2) {
+        struct Doador doador;
+        printf("Nome: ");
+        scanf("%s", doador.nome);
+        printf("Doacao: ");
+        scanf("%d", &doador.doacao);
+        printf("Data: ");
+        scanf("%s", doador.data);
+        printf("CPF do doador: ");
+        scanf("%d", &doador.cpf);
+        cadastrarDoador(doador);
+    } else if (opcao == 3) {
+        int cpf_excluir;
+        printf("Digite o CPF do doador a ser excluído: ");
+        scanf("%d", &cpf_excluir);
+        arquivo = fopen("doadores.txt", "r+");
+        if (arquivo == NULL) {
+            printf("Erro ao abrir o arquivo.\n");
+            return 0;
+        }
+        excluirDoador(arquivo, cpf_excluir);
+        fclose(arquivo);
+    } else if (opcao == 4) {
+        return 1;
+    } else if (opcao == 5) {
+        return 0;
+    } else {
+        printf("Opção inválida.\n");
+    }
+
+    return 0;
+}
+int menuFinanceiro() {
+    int opcao = 0;
+    printf("\nNGO Manager\n\n");
+    printf("Financeiro\n\n");
+    printf("7 - Voltar ao menu inicial\n");
+    printf("8 - Sair\n");
+
+    scanf("%d", &opcao);
+    if (opcao == 7) {
+        return 1;
+    } else if (opcao == 8) {
+        return 0;
+    } else {
+        printf("Opção inválida.\n");
+        return menuFinanceiro();
+    }
+}
+
+void cadastrarDoador(struct Doador doador) {
+    FILE *arquivo;
+    arquivo = fopen("doadores.txt", "a+");
+    
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+        return;
+    }
+    fprintf(arquivo, "%s %d %s %d\n", doador.nome, doador.doacao, doador.data, doador.cpf);
+
+    fclose(arquivo);
+
+    printf("Doador cadastrado.\n");
+}
+
+void consultarDoador(FILE *arquivo) {
+    struct Doador doador;
+
+    printf("\nLista de Doadores:\n");
+    printf("%-20s%-10s%-14s%-11s\n", "Nome", "Doação", "Data", "CPF");
+
+    while (fscanf(arquivo, "%s %d %s %d", doador.nome, &doador.doacao, doador.data, &doador.cpf) == 4) {
+        printf("%-20s%-10d%-14s%-11d\n", doador.nome, doador.doacao, doador.data, doador.cpf);
+    }
+
+    fclose(arquivo);
+    arquivo = fopen("doadores.txt", "r");
+
+    if (arquivo == NULL) {
+        printf("Erro ao reabrir o arquivo.\n");
+    }
+}
+void excluirDoador(FILE *arquivo, int cpf_excluir) {
+    FILE *tempFile;
+    tempFile = fopen("temp.txt", "w");
+
+    if (tempFile == NULL) {
+        printf("Erro ao abrir o arquivo temporário.\n");
+        return;
+    }
+
+    struct Doador doador;
+
+    while (fscanf(arquivo, "%s %d %s %d", doador.nome, &doador.doacao, doador.data, &doador.cpf) == 4) {
+        if (doador.cpf != cpf_excluir) {
+            fprintf(tempFile, "%s %d %s %d\n", doador.nome, doador.doacao, doador.data, doador.cpf);
+        }
+    }
+
+    fclose(arquivo);
+    fclose(tempFile);
+
+    remove("doadores.txt");
+
+    rename("temp.txt", "doadores.txt");
+
+    arquivo = fopen("doadores.txt", "r");
+
+    if (arquivo == NULL) {
+        printf("Erro ao abrir o arquivo.\n");
+    }
+}
