@@ -128,7 +128,7 @@ int menuFinanceiro(){
     printf("6 - Sair\n");
     
 }
-/*
+
 int menuDoadores(){
     int opcao = 0;
     printf("\nNGO Manager\n\n");
@@ -185,34 +185,87 @@ int menuFuncionarios(){
     }  
 }
 
+int exibirBeneficiarios(){
+    FILE *file;
+    file = fopen("beneficiarios.txt", "r");
+    if(file == NULL){
+        printf("Erro ao abrir o arquivo beneficiarios.txt\n");
+        return menuBeneficiarios();
+    }
+    char caractere;
+    while((caractere = fgetc(file)) != EOF){
+        printf("%c", caractere);
+    }
+    printf("\n");
+    getchar();
+}
+
+int consultarBeneficiarios(){
+    exibirBeneficiarios();
+    return menuBeneficiarios();
+}
+
+int cadastrarBeneficiario(){
+    char nomeBeneficiario[100], descricao[500], dataEntradaBeneficiario[11], descricaoBeneficio[500];
+    int idade;
+
+    printf("Qual o nome do beneficiario?\n");
+    scanf(" %[^\n]", nomeBeneficiario);
+
+    printf("Descreva o beneficiario:\n");
+    scanf(" %[^\n]", descricao);
+
+    printf("Qual a idade do beneficiario?\n");
+    scanf("%d", &idade);
+
+    printf("Qual a data de entrada do beneficiario? (dd/mm/aa)\n");
+    scanf(" %s", dataEntradaBeneficiario);
+
+    printf("Descreva o beneficio do beneficiario:\n");
+    scanf(" %[^\n]", descricaoBeneficio);
+
+    FILE *file;
+    file = fopen("beneficiarios.txt", "a");
+    if(file == NULL){
+        printf("Erro ao abrir o arquivo beneficiarios.txt\n");
+        return menuBeneficiarios();
+    }
+
+    fprintf(file, "%s|%s|%d\n", nomeBeneficiario, descricao, idade);
+
+    fclose(file);
+    printf("Beneficiario cadastrado com sucesso!\n");
+    return menuBeneficiarios();
+}
+
 int menuBeneficiarios(){
     int opcao = 0;
     printf("\nNGO Manager\n\n");
     printf("Beneficiarios\n\n");
 
-    printf("1 - Consultar beneficiario\n");
+    printf("1 - Consultar beneficiarios\n");
     printf("2 - Cadastrar beneficiario\n");
     printf("3 - Alterar beneficiario\n");
     printf("4 - Excluir beneficiario\n");
     printf("5 - Voltar ao menu inicial\n");
     printf("6 - Sair\n");
-    
+
     scanf("%d", &opcao);
-    if(opcao == 1){
-        return consultarBeneficiario();
-    } else if (opcao == 2){
-        return cadastrarBeneficiario();
-    } else if (opcao == 3){
-        return alterarBeneficiario();
-    } else if (opcao == 4){
-        return excluirBeneficiario();
-    } else if (opcao == 5){
-        return 1;
-    } else if (opcao == 6){
-        return 0;
-    }  
+    switch(opcao){
+        case 1:
+            return consultarBeneficiarios();
+        case 2:
+            return cadastrarBeneficiario();
+        // lembrar de implementar a funcao de exluir e alterar
+        case 5:
+            return 1; 
+        case 6:
+            return 0; 
+        default:
+            printf("Opcao invalida. Tente novamente.\n");
+            return menuBeneficiarios();
+    }
 }
-*/
 
 
 int main(){
