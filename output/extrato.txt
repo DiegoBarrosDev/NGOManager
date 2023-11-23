@@ -1,0 +1,2 @@
+22/11/23|gasto com pessoal|-5000.000000
+12/12/23|ganho de capital|5500.000000

@@ -20,9 +20,9 @@ void menuInicial(){
         scanf("%d", &opcao);
         if(opcao == 1){
             ativo = menuProjetos();
-        } /* else if(opcao == 1){
+        } else if(opcao == 2){
             ativo = menuFinanceiro();
-        } */else if(opcao == 3){
+        } else if(opcao == 3){
             ativo = menuDoadores();
         } else if(opcao == 4){
             ativo = menuFuncionarios();
@@ -86,6 +86,53 @@ int removeLinha(char * nomeArquivo, int numLinha){
     remove(nomeArquivo);
 
     rename("temp.txt", nomeArquivo);
+}
+
+int verificaFormatoData(const char *data) {
+    // Verifica se a string tem o comprimento correto
+    int i;
+    for (i = 0; data[i] != '\0'; i++);
+    if (i != 10) {
+        return 0;
+    }
+
+    // Verifica o formato dd/mm/aaaa
+    for (i = 0; i < 10; i++) {
+        if ((i == 2 || i == 5) && data[i] != '/') {
+            return 0;
+        } else if (!(data[i] >= '0' && data[i] <= '9') && (i != 2 && i != 5)) {
+            return 0;
+        }
+    }
+
+    // Verifica valores específicos para dia, mês e ano
+    int dia = (data[0] - '0') * 10 + (data[1] - '0');
+    int mes = (data[3] - '0') * 10 + (data[4] - '0');
+    int ano = (data[6] - '0') * 1000 + (data[7] - '0') * 100 + (data[8] - '0') * 10 + (data[9] - '0');
+
+    if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 0) {
+        return 0;
+    }
+
+    // Verifica meses com 30 dias
+    if ((mes == 4 || mes == 6 || mes == 9 || mes == 11) && dia > 30) {
+        return 0;
+    }
+
+    // Verifica fevereiro e anos bissextos
+    if (mes == 2) {
+        if ((ano % 4 == 0 && ano % 100 != 0) || (ano % 400 == 0 && ano % 100 == 0)) {
+            if (dia > 29) {
+                return 0;
+            }
+        } else {
+            if (dia > 28) {
+                return 0;
+            }
+        }
+    }
+
+    return 1;
 }
 
 // PROJETOS
@@ -154,8 +201,13 @@ int cadastrarProjeto(){
     printf("Descreva o seu projeto?\n");
     scanf(" %[^\n]", novo->descricao);
     
-    printf("Qual a data de inicio do seu projeto? (dd/mm/aa)\n");
+    printf("Qual a data de inicio do seu projeto? (dd/mm/aaaa)\n");
     scanf(" %s", novo->dataInicial);
+    while(verificaFormatoData(novo->dataInicial) == 0){
+        printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+        printf("Insira uma data no formato (dd/mm/aaaa):\n");
+        scanf(" %s", novo->dataInicial);
+    }
 
     printf("Qual a valor do seu projeto?\n");
     scanf(" %f", &novo->valorEstimado);
@@ -231,6 +283,11 @@ int alterarProjeto(){
     }else if (opcao == 3){
         printf("Digite a nova data inicial: \n");
         scanf(" %[^\n]", projeto.dataInicial);
+        while(verificaFormatoData(projeto.dataInicial) == 0){
+        printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+        printf("Insira uma data no formato (dd/mm/aaaa):\n");
+        scanf(" %s", projeto.dataInicial);
+    }
     }else if (opcao == 4){
         printf("Digite o novo valor: \n");
         scanf(" %[^\n]", &projeto.valorEstimado);
@@ -290,7 +347,193 @@ int menuProjetos(){
 }
 
 // FINANCEIRO
+
+typedef struct Lanc{
+    char data[11];
+    char descricao[20];
+    float valor;
+}Lancamento;
+
+
+int exibirLancamentos(){
+    
+    FILE * arquivo;
+    arquivo = fopen("extrato.txt", "r+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo extrato.txt\n");
+        return 1;
+    }
+    int linhas = contarLinhas(arquivo);
+    rewind(arquivo);
+    
+    for(int i = 1; i <= linhas; i++){
+        Lancamento lancamento;
+
+        fscanf(arquivo, "%[^|]|%[^|]|%f\n", lancamento.data, lancamento.descricao, &lancamento.valor);
+        printf("%-2d%-20s%-20s%-20.2f\n", i, lancamento.data, lancamento.descricao, lancamento.valor);       
+    
+    }   
+    fclose(arquivo);
+}
+
+int criaLinhaLancamento(Lancamento lancamento){
+    FILE *arquivo;
+    
+    arquivo = fopen("extrato.txt", "a+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo extrato.txt\n");
+        return menuFinanceiro();
+    }
+
+    fprintf(arquivo, "%s|%s|%f\n", lancamento.data, lancamento.descricao, lancamento.valor);
+
+    fclose(arquivo);
+}
+
+int consultarSaldo(){
+    float saldo;
+
+    FILE * arquivo;
+    arquivo = fopen("extrato.txt", "r+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo extrato.txt\n");
+        return 1;
+    }
+    int linhas = contarLinhas(arquivo);
+    rewind(arquivo);
+    
+    for(int i = 1; i <= linhas; i++){
+        Lancamento lancamento;
+
+        fscanf(arquivo, "%[^|]|%[^|]|%f\n", lancamento.data, lancamento.descricao, &lancamento.valor);
+        saldo += lancamento.valor;       
+    }   
+    fclose(arquivo);
+
+    printf("\nSeu saldo:\n");
+    printf("%.2f\n", saldo);
+    return menuFinanceiro();
+}
+
+int cadastrarLancamento(){
+    Lancamento * novo = malloc(sizeof(Lancamento));
+    int natureza;
+    float valor;
+
+    printf("Cadastrar:\n");
+    printf("1 - Credito\n");
+    printf("2 - Debito\n");
+    scanf(" %d", &natureza);
+
+    printf("Data do lancamento? (dd/mm/aaaa)\n");
+    scanf(" %[^\n]", novo->data);
+    while(verificaFormatoData(novo->data) == 0){
+        printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+        printf("Insira uma data no formato (dd/mm/aaaa):\n");
+        scanf(" %s", novo->data);
+    }
+
+    printf("Descricao do lancamento?\n");
+    scanf(" %[^\n]", novo->descricao);
+    
+    printf("Qual o valor?\n");
+    scanf(" %f", &valor);
+
+    if(natureza == 2){
+        valor = valor * -1;
+    }
+    novo->valor = valor;
+
+    FILE *arquivo;
+    
+    arquivo = fopen("extrato.txt", "a+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo extrato.txt\n");
+        return menuProjetos();
+    }
+
+    fprintf(arquivo, "%s|%s|%f\n", novo->data, novo->descricao, novo->valor);
+
+    fclose(arquivo);
+    free(novo);
+    printf("Lancamento cadastrado com sucesso!\n");
+    return menuFinanceiro();
+}
+
+int alterarLancamento(){
+    int opcao, cod;
+    exibirLancamentos();
+    printf("\nQual o codigo do lancamento que voce deseja alterar?\n");
+    scanf(" %d", &cod);
+    
+    FILE * arquivo;
+    arquivo = fopen("extrato.txt", "r+");
+    if(arquivo == NULL){
+        printf("Erro ao tentar abrir o arquivo extrato.txt");
+        return menuFinanceiro();
+    }
+
+    Lancamento  lancamento;
+    int linhas = contarLinhas(arquivo);
+    rewind(arquivo);
+    
+    for(int i = 1; i <= linhas; i++){
+       
+        if (i == cod){           
+            fscanf(arquivo, "%[^|]|%[^|]|%f\n", lancamento.data, lancamento.descricao, &lancamento.valor);        
+        } else{
+            fscanf(arquivo, "%*[^\n]"); // Ler a linha e não faz nada
+            fscanf(arquivo, "\n"); // Passa para a proxima linha
+        }
+    }
+    
+    printf("1 - Alterar data\n");
+    printf("2 - Alterar descricao\n");
+    printf("3 - Alterar valor\n");
+    printf("4 - Voltar\n");
+    scanf(" %d",  &opcao);
+
+    if(opcao == 1){
+        printf("Digite a nova data: \n");
+        scanf(" %[^\n]", lancamento.data);
+        while(verificaFormatoData(lancamento.data) == 0){
+        printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+        printf("Insira uma data no formato (dd/mm/aaaa):\n");
+        scanf(" %s", lancamento.data);
+    }
+    }else if (opcao == 2){
+        printf("Digite a nova descricao: \n");
+        scanf(" %[^\n]", lancamento.descricao);
+    }else if (opcao == 3){
+        printf("Digite o novo valor: \n");
+        scanf(" %f", &lancamento.valor);
+    }else if (opcao == 4){
+        return menuFinanceiro();
+    }
+    fclose(arquivo);
+    removeLinha("extrato.txt", cod);
+    criaLinhaLancamento(lancamento);
+
+    printf("Lancamento alterado com sucesso");
+    
+    return menuFinanceiro();
+}
+
+int excluirLancamento(){
+    int opcao;
+    exibirLancamentos();
+    printf("\nQual o codigo do lancamento que voce deseja excluir?\n");
+    scanf(" %d", &opcao);
+    removeLinha("extrato.txt", opcao);
+
+    printf("Lancamento excluido com sucesso");
+    return menuFinanceiro();
+
+}
+
 int menuFinanceiro(){
+    int opcao;
+
     printf("\nNGO Manager\n\n");
     printf("Financeiro\n\n");
     printf("1 - Consultar saldo\n");
@@ -299,6 +542,21 @@ int menuFinanceiro(){
     printf("4 - Excluir lancamento\n");
     printf("5 - Voltar ao menu inicial\n");
     printf("6 - Sair\n");
+
+    scanf("%d", &opcao);
+    if(opcao == 1){
+        return consultarSaldo();
+    } else if (opcao == 2){
+        return cadastrarLancamento();
+    } else if (opcao == 3){
+        return alterarLancamento();
+    } else if (opcao == 4){
+        return excluirLancamento();
+    } else if (opcao == 5){
+        return 1;
+    } else if (opcao == 6){
+        return 0;
+    } 
     
 }
 
@@ -470,7 +728,7 @@ typedef struct Func{
     //int cod;
     char nome[20];
     char funcao[20];
-    char dataAdimissao[11];
+    char dataAdmissao[11];
     float salario;
     
 }Funcionario;
@@ -484,7 +742,7 @@ int criaLinhaFuncionarios(Funcionario funcionario){
         return menuFuncionarios();
     }
 
-    fprintf(arquivo, "%s|%s|%s|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, funcionario.salario);
+    fprintf(arquivo, "%s|%s|%s|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdmissao, funcionario.salario);
 
     fclose(arquivo);
 }
@@ -504,8 +762,8 @@ int exibirFuncionarios(){
     for(int i = 1; i <= linhas; i++){
         Funcionario funcionario;
 
-        fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, &funcionario.salario);
-        printf("%-2d%-20s%-20s%-20s%-20.2f\n", i, funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, funcionario.salario);       
+        fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdmissao, &funcionario.salario);
+        printf("%-2d%-20s%-20s%-20s%-20.2f\n", i, funcionario.nome, funcionario.funcao, funcionario.dataAdmissao, funcionario.salario);       
     
     }   
     fclose(arquivo);
@@ -529,8 +787,13 @@ int cadastrarFuncionario(){
     printf("Qual a funcao?\n");
     scanf(" %[^\n]", novo->funcao);
     
-    printf("Qual a data de admissao? (dd/mm/aa)\n");
-    scanf(" %s", novo->dataAdimissao);
+    printf("Qual a data de admissao? (dd/mm/aaaa)\n");
+    scanf(" %s", novo->dataAdmissao);
+    while(verificaFormatoData(novo->dataAdmissao) == 0){
+        printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+        printf("Insira uma data no formato (dd/mm/aaaa):\n");
+        scanf(" %s", novo->dataAdmissao);
+    }
 
     printf("Qual a valor do salario?\n");
     scanf(" %f", &novo->salario);
@@ -543,7 +806,7 @@ int cadastrarFuncionario(){
         return menuFuncionarios();
     }
 
-    fprintf(arquivo, "%s|%s|%s|%f\n", novo->nome, novo->funcao, novo->dataAdimissao, novo->salario);
+    fprintf(arquivo, "%s|%s|%s|%f\n", novo->nome, novo->funcao, novo->dataAdmissao, novo->salario);
 
     fclose(arquivo);
     free(novo);
@@ -571,9 +834,9 @@ int alterarFuncionario(){
     for(int i = 1; i <= linhas; i++){
        
         if (i == cod){           
-            fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, &funcionario.salario);        
+            fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdmissao, &funcionario.salario);        
         } else{
-            fscanf(arquivo, "%*[^\n]"); // Consome a linha a ser excluída
+            fscanf(arquivo, "%*[^\n]"); // Consome a linha
             fscanf(arquivo, "\n"); // Consome a quebra de linha
         }
     }
@@ -593,7 +856,12 @@ int alterarFuncionario(){
         scanf(" %[^\n]", funcionario.funcao);
     }else if (opcao == 3){
         printf("Digite a nova data de admissao: \n");
-        scanf(" %[^\n]", funcionario.dataAdimissao);
+        scanf(" %[^\n]", funcionario.dataAdmissao);
+        while(verificaFormatoData(funcionario.dataAdmissao) == 0){
+        printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+        printf("Insira uma data no formato (dd/mm/aaaa):\n");
+        scanf(" %s", funcionario.dataAdmissao);
+    }
     }else if (opcao == 4){
         printf("Digite o novo salario: \n");
         scanf(" %[^\n]", &funcionario.salario);
