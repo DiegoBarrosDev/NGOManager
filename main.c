@@ -24,11 +24,11 @@ void menuInicial(){
             ativo = menuFinanceiro();
         } */else if(opcao == 3){
             ativo = menuDoadores();
-        } /*else if(opcao == 1){
+        } else if(opcao == 4){
             ativo = menuFuncionarios();
-        } else if(opcao == 1){
+        } else if(opcao == 5){
             ativo = menuBeneficiarios();
-        }*/ else if(opcao == 6){
+        } else if(opcao == 6){
             ativo = 0;
         }        
     }
@@ -87,7 +87,6 @@ int removeLinha(char * nomeArquivo, int numLinha){
 
     rename("temp.txt", nomeArquivo);
 }
-
 
 // PROJETOS
 
@@ -193,17 +192,25 @@ int alterarProjeto(){
     exibirProjetos();
     printf("\nQual o codigo do projeto que voce deseja alterar?\n");
     scanf(" %d", &cod);
-    FILE * arquivo = fopen("projetos.txt", "r+");
     
+    FILE * arquivo;
+    arquivo = fopen("projetos.txt", "r+");
+    if(arquivo == NULL){
+        printf("Erro ao tentar abrir o arquivo");
+        return menuProjetos();
+    }
+
     Projeto projeto;
     int linhas = contarLinhas(arquivo);
     rewind(arquivo);
+    
     for(int i = 1; i <= linhas; i++){
-        if (i != cod){
-            continue;
-        }else{
-            fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f|%[^\n]\n", projeto.nome, projeto.descricao, projeto.dataInicial, &projeto.valorEstimado, projeto.situacao);
-            break;
+       
+        if (i == cod){           
+            fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f|%[^\n]\n", projeto.nome, projeto.descricao, projeto.dataInicial, &projeto.valorEstimado, projeto.situacao);        
+        } else{
+            fscanf(arquivo, "%*[^\n]"); // Consome a linha a ser excluída
+            fscanf(arquivo, "\n"); // Consome a quebra de linha
         }
     }
     
@@ -233,9 +240,12 @@ int alterarProjeto(){
     }else if (opcao == 6){
         return menuProjetos();
     }
-    criaLinhaProjetos(projeto);
-    removeLinha("projetos.txt", cod);
     fclose(arquivo);
+    removeLinha("projetos.txt", cod);
+    criaLinhaProjetos(projeto);
+
+    printf("Projeto alterado com sucesso");
+    
     return 1;
 }
 
@@ -454,12 +464,167 @@ void consultarDoador(FILE *arquivo) {
     
 }
 
-/*
+// FUNCIONARIOS
+
+typedef struct Func{
+    //int cod;
+    char nome[20];
+    char funcao[20];
+    char dataAdimissao[11];
+    float salario;
+    
+}Funcionario;
+
+int criaLinhaFuncionarios(Funcionario funcionario){
+    FILE *arquivo;
+    
+    arquivo = fopen("funcionarios.txt", "a+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo funcionarios.txt\n");
+        return menuFuncionarios();
+    }
+
+    fprintf(arquivo, "%s|%s|%s|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, funcionario.salario);
+
+    fclose(arquivo);
+}
+
+int exibirFuncionarios(){
+    
+    FILE * arquivo;
+    arquivo = fopen("funcionarios.txt", "r+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo funcionarios.txt\n");
+        return 1;
+    }
+    int linhas = contarLinhas(arquivo);
+    rewind(arquivo);
+    
+    
+    for(int i = 1; i <= linhas; i++){
+        Funcionario funcionario;
+
+        fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, &funcionario.salario);
+        printf("%-2d%-20s%-20s%-20s%-20.2f\n", i, funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, funcionario.salario);       
+    
+    }   
+    fclose(arquivo);
+}
+
+int consultarFuncionarios(){
+    printf("\nLista de Projetos:\n\n");
+    printf("  %-20s%-20s%-20s%-20s\n", "Nome", "Funcao", "Data de Admissao", "Salario");
+    exibirFuncionarios();
+    printf("\n");
+    return menuFuncionarios();
+}
+
+int cadastrarFuncionario(){
+    
+    Funcionario * novo = malloc(sizeof(Funcionario));
+
+    printf("Qual o nome do novo funcionario?\n");
+    scanf(" %[^\n]", novo->nome);
+
+    printf("Qual a funcao?\n");
+    scanf(" %[^\n]", novo->funcao);
+    
+    printf("Qual a data de admissao? (dd/mm/aa)\n");
+    scanf(" %s", novo->dataAdimissao);
+
+    printf("Qual a valor do salario?\n");
+    scanf(" %f", &novo->salario);
+ 
+    FILE *arquivo;
+    
+    arquivo = fopen("funcionarios.txt", "a+");
+    if(arquivo == NULL){
+        printf("Erro ao abrir o arquivo funcionarios.txt\n");
+        return menuFuncionarios();
+    }
+
+    fprintf(arquivo, "%s|%s|%s|%f\n", novo->nome, novo->funcao, novo->dataAdimissao, novo->salario);
+
+    fclose(arquivo);
+    free(novo);
+    printf("Funcionario cadastrado com sucesso!\n");
+    return menuFuncionarios();
+}
+
+int alterarFuncionario(){
+    int opcao, cod;
+    exibirFuncionarios();
+    printf("\nQual o codigo do funcionario que voce deseja alterar?\n");
+    scanf(" %d", &cod);
+    
+    FILE * arquivo;
+    arquivo = fopen("funcionarios.txt", "r+");
+    if(arquivo == NULL){
+        printf("Erro ao tentar abrir o arquivo");
+        return menuFuncionarios();
+    }
+
+    Funcionario funcionario;
+    int linhas = contarLinhas(arquivo);
+    rewind(arquivo);
+    
+    for(int i = 1; i <= linhas; i++){
+       
+        if (i == cod){           
+            fscanf(arquivo, "%[^|]|%[^|]|%[^|]|%f\n", funcionario.nome, funcionario.funcao, funcionario.dataAdimissao, &funcionario.salario);        
+        } else{
+            fscanf(arquivo, "%*[^\n]"); // Consome a linha a ser excluída
+            fscanf(arquivo, "\n"); // Consome a quebra de linha
+        }
+    }
+    
+    printf("1 - Alterar nome\n");
+    printf("2 - Alterar funcao\n");
+    printf("3 - Alterar data de admissao\n");
+    printf("4 - Alterar salario\n");
+    printf("5 - Voltar\n");
+    scanf(" %d",  &opcao);
+
+    if(opcao == 1){
+        printf("Digite o novo nome: \n");
+        scanf(" %[^\n]", funcionario.nome);
+    }else if (opcao == 2){
+        printf("Digite a nova funcao: \n");
+        scanf(" %[^\n]", funcionario.funcao);
+    }else if (opcao == 3){
+        printf("Digite a nova data de admissao: \n");
+        scanf(" %[^\n]", funcionario.dataAdimissao);
+    }else if (opcao == 4){
+        printf("Digite o novo salario: \n");
+        scanf(" %[^\n]", &funcionario.salario);
+    }else if (opcao == 5){
+        return menuFuncionarios();
+    }
+    fclose(arquivo);
+    removeLinha("funcionarios.txt", cod);
+    criaLinhaFuncionarios(funcionario);
+
+    printf("Funcionario alterado com sucesso");
+    
+    return menuFuncionarios();
+}
+
+int excluirFuncionario(){
+    int opcao;
+    exibirFuncionarios();
+    printf("\nQual o codigo do funcionario que voce deseja excluir?\n");
+    scanf(" %d", &opcao);
+    removeLinha("funcionarios.txt", opcao);
+
+    printf("Funcionario excluido com sucesso");
+    return menuFuncionarios();
+
+}
 
 int menuFuncionarios(){
     int opcao = 0;
     printf("\nNGO Manager\n\n");
-    printf("Funcionários\n\n");
+    printf("Funcionarios\n\n");
 
     printf("1 - Consultar funcionarios\n");
     printf("2 - Cadastrar funcionarios\n");
@@ -472,17 +637,19 @@ int menuFuncionarios(){
     if(opcao == 1){
         return consultarFuncionarios();
     } else if (opcao == 2){
-        return cadastrarFuncionarios();
+        return cadastrarFuncionario();
     } else if (opcao == 3){
-        return alterarFuncionarios();
+        return alterarFuncionario();
     } else if (opcao == 4){
-        return excluirFuncionarios();
+        return excluirFuncionario();
     } else if (opcao == 5){
         return 1;
     } else if (opcao == 6){
         return 0;
     }  
 }
+
+// BENEFICIARIOS
 
 int exibirBeneficiarios(){
     FILE *file;

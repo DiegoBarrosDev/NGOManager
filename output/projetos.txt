@@ -1,6 +1,0 @@
-Projeto Mahattan|Cria a bomba atomica|12/12/43|234.000000|Finalizado
-Projeto A|fazer o A|12/12/12|1.000000|Em andamento
-Projeto C|fazer o C|12/12/23|1000.000000|A iniciar
-Projeto B|Cria a bomba atomica|12/12/43|234.000000|Finalizado
-Projeto Mahattan|fazer o B|12/12/43|234.000000|Finalizado
-Projeto D|Cria a bomba atomica|12/12/43|234.000000|Finalizado
