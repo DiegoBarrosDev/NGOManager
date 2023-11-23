@@ -919,57 +919,209 @@ int menuFuncionarios(){
 
 // BENEFICIARIOS
 
+
+typedef struct Ben{
+//int cod;
+char nome[20];
+int idade;
+char sexo[2];
+char endereco[50];
+char dataCadastro[11];
+}Beneficiario;
+
+int criaLinhaBeneficiarios(Beneficiario beneficiario){
+FILE *arquivo;
+arquivo = fopen("beneficiarios.txt", "a+");
+if(arquivo == NULL){
+    printf("Erro ao abrir o arquivo beneficiarios.txt\n");
+    return menuBeneficiarios();
+}
+
+fprintf(arquivo, "%s|%d|%s|%s|%s\n", beneficiario.nome, beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+
+fclose(arquivo);
+}
+
 int exibirBeneficiarios(){
-    FILE *file;
-    file = fopen("beneficiarios.txt", "r");
-    if(file == NULL){
-        printf("Erro ao abrir o arquivo beneficiarios.txt\n");
-        return menuBeneficiarios();
-    }
-    char caractere;
-    while((caractere = fgetc(file)) != EOF){
-        printf("%c", caractere);
-    }
-    printf("\n");
-    getchar();
+    FILE * arquivo;
+arquivo = fopen("beneficiarios.txt", "r+");
+if(arquivo == NULL){
+    printf("Erro ao abrir o arquivo beneficiarios.txt\n");
+    return 1;
+}
+int linhas = contarLinhas(arquivo);
+rewind(arquivo);
+
+
+for(int i = 1; i <= linhas; i++){
+    Beneficiario beneficiario;
+
+    fscanf(arquivo, "%[^|]|%d|%s|%[^|]|%s\n", beneficiario.nome, &beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+    printf("%-2d%-20s%-5d%-5s%-50s%-20s\n", i, beneficiario.nome, beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);       
+
+}   
+fclose(arquivo);
 }
 
 int consultarBeneficiarios(){
-    exibirBeneficiarios();
-    return menuBeneficiarios();
+printf("\nLista de Projetos:\n\n");
+printf(" %-20s%-5s%-5s%-50s%-20s\n", "Nome", "Idade", "Sexo", "Endereco", "Data de Cadastro");
+exibirBeneficiarios();
+printf("\n");
+return menuBeneficiarios();
 }
 
 int cadastrarBeneficiario(){
-    char nomeBeneficiario[100], descricao[500], dataEntradaBeneficiario[11], descricaoBeneficio[500];
-    int idade;
+    Beneficiario * novo = malloc(sizeof(Beneficiario));
 
-    printf("Qual o nome do beneficiario?\n");
-    scanf(" %[^\n]", nomeBeneficiario);
+printf("Qual o nome do novo beneficiario?\n");
+scanf(" %[^\n]", novo->nome);
 
-    printf("Descreva o beneficiario:\n");
-    scanf(" %[^\n]", descricao);
+printf("Idade?\n");
+scanf(" %d", &novo->idade);
 
-    printf("Qual a idade do beneficiario?\n");
-    scanf("%d", &idade);
+printf("Sexo? (M/F)\n");
+scanf(" %s", novo->sexo);
 
-    printf("Qual a data de entrada do beneficiario? (dd/mm/aa)\n");
-    scanf(" %s", dataEntradaBeneficiario);
+printf("Endereco?\n");
+scanf(" %[^\n]", novo->endereco);
 
-    printf("Descreva o beneficio do beneficiario:\n");
-    scanf(" %[^\n]", descricaoBeneficio);
+printf("Data de Cadastro? (dd/mm/aaaa)\n");
+scanf(" %s", novo->dataCadastro);
+while(verificaFormatoData(novo->dataCadastro) == 0){
+    printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+    printf("Insira uma data no formato (dd/mm/aaaa):\n");
+    scanf(" %s", novo->dataCadastro);
+}
 
-    FILE *file;
-    file = fopen("beneficiarios.txt", "a");
-    if(file == NULL){
-        printf("Erro ao abrir o arquivo beneficiarios.txt\n");
-        return menuBeneficiarios();
-    }
+FILE *arquivo;
 
-    fprintf(file, "%s|%s|%d\n", nomeBeneficiario, descricao, idade);
-
-    fclose(file);
-    printf("Beneficiario cadastrado com sucesso!\n");
+arquivo = fopen("beneficiarios.txt", "a+");
+if(arquivo == NULL){
+    printf("Erro ao abrir o arquivo beneficiarios.txt\n");
     return menuBeneficiarios();
+}
+
+fprintf(arquivo, "%s|%d|%s|%s|%s\n", novo->nome, novo->idade, novo->sexo, novo->endereco, novo->dataCadastro);
+
+fclose(arquivo);
+free(novo);
+printf("Beneficiario cadastrado com sucesso!\n");
+return menuBeneficiarios();
+}
+
+int alterarBeneficiario(){
+    int opcao, cod;
+    exibirBeneficiarios();
+    printf("\nQual o codigo do beneficiario que voce deseja alterar?\n");
+    scanf(" %d", &cod);
+    FILE * arquivo;
+arquivo = fopen("beneficiarios.txt", "r+");
+if(arquivo == NULL){
+    printf("Erro ao tentar abrir o arquivo");
+    return menuBeneficiarios();
+}
+
+Beneficiario beneficiario;
+int linhas = contarLinhas(arquivo);
+rewind(arquivo);
+
+for(int i = 1; i <= linhas; i++){
+   
+    if(i == cod){
+        
+        fscanf(arquivo, "%[^|]|%d|%s|%[^|]|%s\n", beneficiario.nome, &beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+        printf("1 - Nome: %s\n", beneficiario.nome);
+        printf("2 - Idade: %d\n", beneficiario.idade);
+        printf("3 - Sexo: %s\n", beneficiario.sexo);
+        printf("4 - Endereco: %s\n", beneficiario.endereco);
+        printf("5 - Data de Cadastro: %s\n", beneficiario.dataCadastro);
+        printf("Escolha o que voce deseja alterar:\n");
+        scanf(" %d", &opcao);
+        
+        if(opcao == 1){
+            printf("Insira o novo nome:\n");
+            scanf(" %[^\n]", beneficiario.nome);
+        } else if (opcao == 2){
+            printf("Insira a nova idade:\n");
+            scanf(" %d", &beneficiario.idade);
+        } else if (opcao == 3){
+            printf("Insira o novo sexo (M/F):\n");
+            scanf(" %s", beneficiario.sexo);
+        } else if (opcao == 4){
+            printf("Insira o novo endereco:\n");
+            scanf(" %[^\n]", beneficiario.endereco);
+        } else if (opcao == 5){
+            printf("Insira a nova data de cadastro (dd/mm/aaaa):\n");
+            scanf(" %s", beneficiario.dataCadastro);
+            while(verificaFormatoData(beneficiario.dataCadastro) == 0){
+                printf("A data nao esta no formato especificado ou nao corresponde a uma data valida\n");
+                printf("Insira uma data no formato (dd/mm/aaaa):\n");
+                scanf(" %s", beneficiario.dataCadastro);
+            }
+        } 
+    }
+}
+
+fclose(arquivo);
+
+arquivo = fopen("beneficiarios.txt", "w");
+if(arquivo == NULL){
+    printf("Erro ao tentar abrir o arquivo");
+    return menuBeneficiarios();
+}
+
+rewind(arquivo);
+
+for(int i = 1; i <= linhas; i++){
+    if(i == cod){
+        fprintf(arquivo, "%s|%d|%s|%s|%s\n", beneficiario.nome, beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+    } else {
+        fscanf(arquivo, "%[^|]|%d|%s|%[^|]|%s\n", beneficiario.nome, &beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+        fprintf(arquivo, "%s|%d|%s|%s|%s\n", beneficiario.nome, beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+    }
+}
+fclose(arquivo);
+printf("Beneficiario alterado com sucesso!\n");
+return menuBeneficiarios();
+}
+
+int excluirBeneficiario(){
+    int cod;
+    exibirBeneficiarios();
+    printf("\nQual o codigo do beneficiario que voce deseja excluir?\n");
+    scanf(" %d", &cod);
+    FILE * arquivo;
+arquivo = fopen("beneficiarios.txt", "r+");
+if(arquivo == NULL){
+    printf("Erro ao tentar abrir o arquivo");
+    return menuBeneficiarios();
+}
+
+Beneficiario beneficiario;
+int linhas = contarLinhas(arquivo);
+rewind(arquivo);
+
+arquivo = fopen("beneficiarios.txt", "w");
+if(arquivo == NULL){
+    printf("Erro ao tentar abrir o arquivo");
+    return menuBeneficiarios();
+}
+
+rewind(arquivo);
+
+for(int i = 1; i <= linhas; i++){
+    if(i != cod){
+        fscanf(arquivo, "%[^|]|%d|%s|%[^|]|%s\n", beneficiario.nome, &beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+        fprintf(arquivo, "%s|%d|%s|%s|%s\n", beneficiario.nome, beneficiario.idade, beneficiario.sexo, beneficiario.endereco, beneficiario.dataCadastro);
+    }
+}
+
+
+
+fclose(arquivo);
+printf("Beneficiario excluido com sucesso!\n");
+return menuBeneficiarios();
 }
 
 int menuBeneficiarios(){
@@ -978,28 +1130,28 @@ int menuBeneficiarios(){
     printf("Beneficiarios\n\n");
 
     printf("1 - Consultar beneficiarios\n");
-    printf("2 - Cadastrar beneficiario\n");
-    printf("3 - Alterar beneficiario\n");
-    printf("4 - Excluir beneficiario\n");
+    printf("2 - Cadastrar beneficiarios\n");
+    printf("3 - Alterar beneficiarios\n");
+    printf("4 - Excluir beneficiarios\n");
     printf("5 - Voltar ao menu inicial\n");
     printf("6 - Sair\n");
-
+    
     scanf("%d", &opcao);
-    switch(opcao){
-        case 1:
-            return consultarBeneficiarios();
-        case 2:
-            return cadastrarBeneficiario();
-        // lembrar de implementar a funcao de exluir e alterar
-        case 5:
-            return 1; 
-        case 6:
-            return 0; 
-        default:
-            printf("Opcao invalida. Tente novamente.\n");
-            return menuBeneficiarios();
-    }
+    if(opcao == 1){
+        return consultarBeneficiarios();
+    } else if (opcao == 2){
+        return cadastrarBeneficiario();
+    } else if (opcao == 3){
+        return alterarBeneficiario();
+    } else if (opcao == 4){
+        return excluirBeneficiario();
+    } else if (opcao == 5){
+        return 1;
+    } else if (opcao == 6){
+        return 0;
+    }  
 }
+
 
 int main(){
 
